@@ -6,11 +6,17 @@ from core.models import SysMenu, SysDept, SysRole, SysUser, SysUserRole, SysDict
 
 
 class Command(BaseCommand):
-    """
-    初始化数据库命令
-    """
+    help = '初始化系统数据'
+
+    def add_arguments(self, parser):
+        parser.add_argument('--username', type=str, help='管理员用户名')
+        parser.add_argument('--password', type=str, help='管理员密码')
 
     def handle(self, *args, **options):
+        print('================正在初始化系统数据================')
+        username = options.get('username') or 'admin'
+        password = options.get('password') or '123456'
+
         base_model = {
             'is_delete': False,
             'remark': '',
@@ -74,6 +80,7 @@ class Command(BaseCommand):
             },
         ]
         SysDictType.objects.bulk_create([SysDictType(**data, **base_model) for data in data_type_dict])
+        print('-> sys_dict_type')
         dict_types = SysDictType.objects.all()
 
         # 初始化字典数据
@@ -350,6 +357,7 @@ class Command(BaseCommand):
             },
         ]
         SysDictData.objects.bulk_create([SysDictData(**data, **base_model) for data in dict_data])
+        print('-> sys_dict_data')
 
         # 初始化参数设置
         SysConfig.objects.create(**{
@@ -358,6 +366,7 @@ class Command(BaseCommand):
             'config_key': 'sys.user.initPassword',
             'config_value': '123456',
         }, **base_model)
+        print('-> sys_config')
 
         # 初始化菜单数据
         menus = [
@@ -1397,6 +1406,7 @@ class Command(BaseCommand):
             }
         ]
         SysMenu.objects.bulk_create([SysMenu(**data, **base_model) for data in menus])
+        print('-> sys_menu')
 
         # 初始化部门数据
         SysDept.objects.create(**{
@@ -1410,6 +1420,7 @@ class Command(BaseCommand):
             'email': '690126048@qq.com',
             'status': '0'
         }, **base_model)
+        print('-> sys_dept')
 
         # 初始化角色数据
         role = SysRole.objects.create(**{
@@ -1422,22 +1433,25 @@ class Command(BaseCommand):
             'menu_check_strictly': True,
             'status': '0'
         }, **base_model)
+        print('-> sys_role')
 
         # 初始化用户数据
         user = SysUser(**{
             'user_id': 1,
-            'username': 'admin',
+            'username': username,
             'nickname': '超级管理员',
             'email': '690126048@qq.com',
             'is_staff': True,
             'is_superuser': True
         }, **base_model)
-        user.set_password('123456')
+        user.set_password(password)
         user.save()
+        print('-> sys_user')
 
         # 初始化用户角色数据
         SysUserRole.objects.create(
             user=user,
             role=role
         )
-        print('系统初始化成功！')
+        print('================系统数据初始化成功！================')
+        print('管理员 用户名：%s 密码：%s' % (username, password))
